@@ -1,6 +1,6 @@
 const UserModel = require("../models/user.model");
 const HttpException = require("../utils/HttpException.utils");
-const { validationsResult } = require("express-validator");
+const { validationResult } = require("express-validator");
 const brcypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
@@ -78,7 +78,7 @@ class UserController {
             throw new HttpException(404, "Something went wrong");
         }
 
-        const { affectedRows, changeRows, Info } = result;
+        const { affectedRows, changeRows, info } = result;
 
         const message = !affectedRows ? "User not found" : affectedRows && changeRows ? "User updated successfully" : "update failed";
 
@@ -98,20 +98,20 @@ class UserController {
 
         const { username, password: pass } = req.body;
 
-        const user = await UserModel.findOne({ email });
+        const user = await UserModel.findOne({ username });
 
         if (!user) {
             throw new HttpException(401, "Unable to login!");
         }
 
-        const isMatch = await brcypt.compare(ass, user.password);
+        const isMatch = await brcypt.compare(pass, user.password);
 
         if (!isMatch) {
             throw new HttpException(401, "Incorrect password!");
         }
 
         const secretKey = process.env.SECRET_JWT || "";
-        const token = jwt.sign({ user_id: user.id.toString()}, secretKey, { 
+        const token = jwt.sign({ user_id: user.id.toString() }, secretKey, { 
             expiresIn: "24h"
         });
 
@@ -121,7 +121,7 @@ class UserController {
     }
 
     checkValidation = (req) => {
-        const errors = validationsResult(req);
+        const errors = validationResult(req);
         if (!errors.isEmpty()) {
             throw new HttpException(400, "Validation", errors);
         }
